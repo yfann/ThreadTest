@@ -10,17 +10,17 @@ namespace ThreadTest
     {
         private static void Main(string[] args)
         {
-            Thread[] threads = new Thread[10];
-            Account acc = new Account(1000);
-            for (int i = 0; i < 10; i++)
-            {
-                Thread t = new Thread(new ThreadStart(acc.DaTransactions));
-                threads[i] = t;
-            }
-            for (int i = 0; i < 10; i++)
-            {
-                threads[i].Start();
-            }
+            //Thread[] threads = new Thread[10];
+            //Account acc = new Account(1000);
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    Thread t = new Thread(new ThreadStart(acc.DaTransactions));
+            //    threads[i] = t;
+            //}
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    threads[i].Start();
+            //}
 
             //Worker wk = new Worker();
             //Thread t1 = new Thread(wk.Work);
@@ -38,7 +38,43 @@ namespace ThreadTest
             //MethodTest tt = new MethodTest();
             //tt.InstanceMethod();
 
-            Console.ReadKey();
+            //Interrupt Test
+            //InterruptTest it = new InterruptTest();
+            //Thread t = new Thread(new ThreadStart(it.Sleep));
+            //t.Start();
+            //while (!t.IsAlive) ;
+            //Thread.Sleep(1);
+            //t.Interrupt();
+            //Console.ReadKey();
+
+            //monitor test
+            //MonitorTest mt = new MonitorTest();
+            //Thread ping = new Thread(mt.Ping);
+            //Thread pong = new Thread(mt.Pong);
+            //ping.Start();
+            //pong.Start();
+
+            //autoresetevent test
+            //Console.WriteLine(new AutoEventTest().Result(123));
+            //AutoResetEventTest1 autoReset = new AutoResetEventTest1();
+            //Thread t1 = new Thread(autoReset.loop1);
+            //Thread t2 = new Thread(autoReset.Loop);
+            //t1.Start();
+            //t2.Start();
+
+            //mutex test
+            MutexTest mu = new MutexTest();
+            Thread[] ts = new Thread[10];
+            for (int i = 0; i < 10; i++)
+            {
+                ts[i] = new Thread(mu.Run);
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                ts[i].Start();
+            }
+
+            Console.ReadLine();
         }
 
         public static void ThreadTest1()
@@ -49,6 +85,105 @@ namespace ThreadTest
         public static void ThreadTest2(object str)
         {
             Console.WriteLine("{0} {1}", Thread.CurrentThread.ManagedThreadId, str.ToString());
+        }
+    }
+
+    internal class MutexTest
+    {
+        private Mutex mu = new Mutex();
+
+        public void Run()
+        {
+            mu.WaitOne();
+            Console.WriteLine("{0} before sleep", Thread.CurrentThread.ManagedThreadId);
+            Thread.Sleep(500);
+            Console.WriteLine("{0} after sleep", Thread.CurrentThread.ManagedThreadId);
+            mu.ReleaseMutex();
+        }
+    }
+
+    internal class AutoResetEventTest1
+    {
+        private AutoResetEvent auto = new AutoResetEvent(false);
+        private AutoResetEvent auto1 = new AutoResetEvent(false);
+        public int times = 10;
+
+        public void SetEvent()
+        {
+            for (int i = 0; i < times; i++)
+            {
+                Console.WriteLine("set {0}", i);
+                auto.Set();
+                auto1.WaitOne();
+            }
+        }
+
+        public void Loop()
+        {
+            for (int i = 0; i < times; i++)
+            {
+                auto1.Set();
+                Console.WriteLine("loop before wait {0}", i);
+                auto.WaitOne();
+                Console.WriteLine("loop after wait {0}", i);
+            }
+        }
+
+        public void loop1()
+        {
+            for (int i = 0; i < times; i++)
+            {
+                Console.WriteLine("loop1 before wait {0}", i);
+                auto1.WaitOne();
+                Console.WriteLine("loop1 after wait {0}", i);
+                auto.Set();
+            }
+        }
+    }
+
+    internal class MonitorTest
+    {
+        private object lockMe = new object();
+        public int times = 5;
+
+        public void Ping()
+        {
+            lock (lockMe)
+            {
+                for (int i = 0; i < times; i++)
+                {
+                    Console.WriteLine("Ping");
+                    Monitor.Pulse(lockMe);
+                    Monitor.Wait(lockMe);
+                }
+            }
+        }
+
+        public void Pong()
+        {
+            lock (lockMe)
+            {
+                for (int i = 0; i < times; i++)
+                {
+                    Console.WriteLine("Pong");
+                    Monitor.Pulse(lockMe);
+                    Monitor.Wait(lockMe);
+                }
+            }
+        }
+    }
+
+    internal class InterruptTest
+    {
+        public void Sleep()
+        {
+            Console.WriteLine("Start to sleep");
+            try
+            {
+                Thread.Sleep(10000);
+            }
+            catch (Exception e) { Console.WriteLine("Exception happens"); }
+            Console.WriteLine("Awake from sleep");
         }
     }
 
