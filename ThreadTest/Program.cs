@@ -87,7 +87,12 @@ namespace ThreadTest
             //}), "test");
             //Console.WriteLine("end");
 
-            TaskTest();
+            Thread t1 = new Thread(SemaphoreTest.Run);
+            Thread t2 = new Thread(SemaphoreTest.Realse);
+            t1.Start();
+            t2.Start();
+
+            //TaskTest();
             Console.ReadLine();
         }
 
@@ -136,6 +141,32 @@ namespace ThreadTest
             // Although the task was run synchrounously, it is a good practice to wait for it which observes for
             // exceptions potentially thrown by that task.
             t3.Wait();
+        }
+    }
+
+    internal class SemaphoreTest
+    {
+        private static Semaphore sem = new Semaphore(3, 10);
+
+        public static void Run()
+        {
+            for (int i = 0; i < 1000; i++)
+            {
+                sem.WaitOne();
+                Console.WriteLine("{0} is running", i);
+            }
+        }
+
+        public static void Realse()
+        {
+            Random r = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                Thread.Sleep(1000);
+                int s = r.Next(1, 10);
+                Console.WriteLine("realse {0}", s);
+                sem.Release(s);
+            }
         }
     }
 
